@@ -1,5 +1,6 @@
 TOKEN = "7041636443:AAFgh6qfG6aIbJP2NgQIBe6x_7WG5pFdvFQ"
 TIMEZONE = "Europe/Moscow"
+import asyncio
 
 import logging
 
@@ -11,25 +12,27 @@ import zoneinfo
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 
-def get_conference_link():
+async def get_conference_link():
     options = webdriver.FirefoxOptions()
     options.add_argument("--headless")
     driver = webdriver.Firefox(options=options)
     email = "test-account-bot@yandex.ru"
-    password = "GDJSKG12578gq(#@%&^dg(o*d&@#%olodig6YTiea*topyT"
+    password = "GDJSKG12578gq(#@%&^dg(o*d&@#%olodig6YTiea*topyT"  # "//*[@id='passp:sign-in']"
     driver.get('https://telemost.yandex.ru/')
-    driver.find_element(By.XPATH,"/html/body/div/div/div[2]/div[2]/div/div[2]/div/button").click()
-    driver.find_element(By.XPATH,"//*[@id='passp-field-login']").send_keys(email)
-    driver.find_element(By.XPATH,"//*[@id='passp:sign-in']").click()
-    driver.find_element(By.XPATH,"//*[@id='passp-field-passwd']").send_keys(password)
-    driver.find_element(By.XPATH,"//*[@id='passp:sign-in']").click()
-    time.sleep(3)
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "/html/body/div/div/div[2]/div[2]/div/div[2]/div/button"))).click()
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='passp-field-login']"))).send_keys(email)
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='passp:sign-in']"))).click()
+    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='passp-field-passwd']"))).send_keys(password)
+    driver.find_element(By.XPATH, "//*[@id='passp:sign-in']").click()
+    time.sleep(5)
     url = driver.current_url
-    driver.find_element(By.XPATH,"/html/body/div/div/div[2]/div[2]/div/div[3]/div/button").click()
+    driver.find_element(By.XPATH, "/html/body/div/div/div[2]/div[2]/div/div[3]/div/button").click()
     driver.quit()
-    return(url)
+    return (url)
 
 def get_users(context: ContextTypes.DEFAULT_TYPE) -> dict:
     return context.bot_data.setdefault("users", {})
@@ -156,7 +159,7 @@ async def meeting_started_notif(context: ContextTypes.DEFAULT_TYPE) -> None:
     (private, data) = context.job.data
     if not private:
         (id_, link) = data
-        meetings = get_meetings(context) 
+        meetings = get_meetings(context)
         meeting = meetings[id_]
         name = meeting["name"]
         members = meeting["members"]
@@ -176,7 +179,7 @@ async def about_30_left_notif(context: ContextTypes.DEFAULT_TYPE) -> None:
     name = meeting["name"]
     members = meeting["members"]
     users = get_users(context)
-    link = get_conference_link()
+    link = await get_conference_link()
     context.job_queue.run_once(less_than_30_left_notif, datetime.now(zoneinfo.ZoneInfo(get_timezone(context))), chat_id=chat_id, name=f"{chat_id}/{id_}/2", data=(False, (id_, link)))
     context.job_queue.run_once(less_than_5_left_notif, date_time - timedelta(minutes=5) , chat_id=chat_id, name=f"{chat_id}/{id_}/1", data=(False, (id_, link)))
     context.job_queue.run_once(meeting_started_notif, date_time, chat_id=chat_id, name=f"{chat_id}/{id_}/0", data=(False, (id_, link)))
@@ -231,11 +234,11 @@ async def create_meeting_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE)
     left = (date_time - now).total_seconds()
     chat_id = update.effective_chat.id
     if left <= 300: # 5 минут
-        link = get_conference_link()
+        link = await get_conference_link()
         context.job_queue.run_once(less_than_5_left_notif, datetime.now(zoneinfo.ZoneInfo(get_timezone(context))), chat_id=chat_id, name=f"{chat_id}/{id_}/1", data=(False, (id_, link)))
         context.job_queue.run_once(meeting_started_notif, date_time, chat_id=chat_id, name=f"{chat_id}/{id_}/0", data=(False, (id_, link)))
     elif left <= 1800: # 30 минут
-        link = get_conference_link()
+        link = await get_conference_link()
         context.job_queue.run_once(less_than_30_left_notif, datetime.now(zoneinfo.ZoneInfo(get_timezone(context))), chat_id=chat_id, name=f"{chat_id}/{id_}/2", data=(False, (id_, link)))
         context.job_queue.run_once(less_than_5_left_notif, date_time - timedelta(minutes=5) , chat_id=chat_id, name=f"{chat_id}/{id_}/1", data=(False, (id_, link)))
         context.job_queue.run_once(meeting_started_notif, date_time, chat_id=chat_id, name=f"{chat_id}/{id_}/0", data=(False, (id_, link)))
@@ -267,7 +270,7 @@ async def remove_meetings_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
     if len(context.args) < 1:
         await update.effective_message.reply_text("Ошибка ввода. Используйте /remove_meetings <список ID...>.")
-        return 
+        return
     meetings = get_meetings(context)
     unknown_ids = set()
     for id_ in context.args:
