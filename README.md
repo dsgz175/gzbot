@@ -39,5 +39,5 @@ $ /create_meeting sozvon Общее_Собрание today 13:00 @example_user
 ## Удаление
 
 ```
-$ /remove_meeting sozvon
+$ /remove_meetings sozvon
 ```
