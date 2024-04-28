@@ -251,12 +251,12 @@ async def create_meeting_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE)
             reply += f"{i + 1}. @{user}\n"
     minutes, seconds = divmod(left, 60)
     hours, minutes = divmod(minutes, 60)
-    reply += f"До втречи осталось {int(hours)} часов {int(minutes)} минут {int(seconds)} секунд."
+    reply += f"До встречи осталось {int(hours)} часов {int(minutes)} минут {int(seconds)} секунд."
     await update.effective_message.reply_text(reply)
 
 async def you_are_removed_notif(context: ContextTypes.DEFAULT_TYPE) -> None:
     (id_, name) = context.job.data
-    await context.bot.send_message(context.job.chat_id, text=f"Вы були удалены из встречи {name} ({id_}).")
+    await context.bot.send_message(context.job.chat_id, text=f"Вы были удалены из встречи {name} ({id_}).")
 
 def remove_job_if_exists(name: str, context: ContextTypes.DEFAULT_TYPE) -> None:
     jobs = context.job_queue.get_jobs_by_name(name)
