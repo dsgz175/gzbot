@@ -17,3 +17,27 @@
 
 - [selenium](https://selenium-python.readthedocs.io)
 - [python-telegram-bot-api](https://github.com/python-telegram-bot/python-telegram-bot)
+
+# Пример использования
+
+## Создание
+
+ЛС:
+
+```
+$ /start
+Теперь чат-бот может уведомлять вас о встречах.
+```
+
+В чате:
+
+```
+$ /create_meeting sozvon Общее_Собрание today 13:00 @example_user
+До втречи осталось 1 часов 2 минут 3 секунд.
+```
+
+## Удаление
+
+```
+$ /remove_meeting sozvon
+```
